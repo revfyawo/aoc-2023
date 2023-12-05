@@ -1,11 +1,32 @@
-def parse_range_map(lines: list[str]) -> list[dict]:
-    result = []
+class Interval:
+    def __init__(self, start: int, length: int):
+        self.start = start
+        self.length = length
+
+    def __contains__(self, item):
+        return self.start <= item < self.start + self.length
+
+
+class IntervalMap:
+    def __init__(self):
+        self._map = {}
+
+    def add_interval(self, src: int, dest: int, length: int):
+        self._map[Interval(src, length)] = Interval(dest, length)
+
+    def map(self, value: int) -> int:
+        for start, dest in self._map.items():
+            if value in start:
+                return dest.start + value - start.start
+        return value
+
+
+def parse_range_map(lines: list[str]) -> IntervalMap:
+    imap = IntervalMap()
     for line in lines:
         split = line.split(" ")
-        result.append(
-            {"len": int(split[2]), "src": int(split[1]), "dest": int(split[0])}
-        )
-    return result
+        imap.add_interval(int(split[1]), int(split[0]), int(split[2]))
+    return imap
 
 
 def part1(content: list[str]):
@@ -24,11 +45,8 @@ def part1(content: list[str]):
     locations = []
     for seed in seeds:
         location = seed
-        for i, map_ in enumerate(maps):
-            for range_ in map_:
-                if location in range(range_["src"], range_["src"] + range_["len"]):
-                    location = range_["dest"] + location - range_["src"]
-                    break
+        for i, imap in enumerate(maps):
+            location = imap.map(location)
         locations.append(location)
 
     print(min(locations))
