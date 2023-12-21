@@ -1,6 +1,7 @@
 import collections.abc
 import sys
 from collections import defaultdict
+from heapq import heappop, heappush
 
 from .graph import Graph, Node
 
@@ -14,24 +15,29 @@ def dijkstra_raw(
     distances = defaultdict(lambda: sys.maxsize)
     distances[start] = 0
     previous = {}
-    unvisited = graph.nodes()
 
-    while unvisited:
-        current = unvisited[0]
-        for node in unvisited:
-            if distances[node] < distances[current]:
-                current = node
-        unvisited.remove(current)
+    queue = [(distances[start], 0, start)]
+    visited = set()
+
+    tie_breaker = 1
+    while queue:
+        _, _, current = heappop(queue)
+        visited.add(current)
         if cutoff and distances[current] >= cutoff:
             continue
         if end and current == end:
             break
 
         for node in graph.neighbors(current):
+            if node in visited:
+                continue
+
             tentative = distances[current] + graph.edge(current, node)
             if tentative < distances[node]:
                 distances[node] = tentative
                 previous[node] = current
+                heappush(queue, (distances[node], tie_breaker, node))
+                tie_breaker += 1
     return distances, previous
 
 
@@ -41,28 +47,32 @@ def a_star_raw(
     end: Node,
     heuristic: collections.abc.Callable[[Node], int],
 ) -> tuple[dict[Node, int], dict[Node, Node]]:
-    unvisited = [start]
     distance = defaultdict(lambda: sys.maxsize)
     distance[start] = 0
     distance_guess = defaultdict(lambda: sys.maxsize)
     distance_guess[start] = heuristic(start)
     previous = {}
 
+    unvisited = [(0, 0, start)]
+    visited = set()
+
+    tie_breaker = 1
     while unvisited:
-        current = unvisited[0]
-        for node in unvisited:
-            if distance_guess[node] < distance_guess[current]:
-                current = node
+        _, _, current = heappop(unvisited)
         if current == end:
             return distance, previous
-        unvisited.remove(current)
+        visited.add(current)
 
         for node in graph.neighbors(current):
+            if node in visited:
+                continue
+
             tentative = distance[current] + graph.edge(current, node)
             if tentative < distance[node]:
                 previous[node] = current
                 distance[node] = tentative
                 distance_guess[node] = tentative + heuristic(node)
-                if node not in unvisited:
-                    unvisited.append(node)
+                heappush(unvisited, (distance[node], tie_breaker, node))
+                tie_breaker += 1
+
     raise ValueError(f"path from {start} to {end} not found")

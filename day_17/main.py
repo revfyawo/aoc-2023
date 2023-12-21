@@ -1,4 +1,5 @@
 import enum
+import time
 from collections import namedtuple
 
 from graph import a_star_raw, dijkstra_raw, Graph
@@ -107,15 +108,18 @@ def part2_graph(content: list[str]) -> Graph:
 if __name__ == "__main__":
     with open("input.txt") as f:
         content = f.read().split("\n")[:-1]
+
     max_x = len(content[0]) - 1
     max_y = len(content) - 1
+    end_nodes = [
+        Node((max_x, max_y), Direction.right),
+        Node((max_x, max_y), Direction.down),
+    ]
+
+    graph = part1_graph(content)
+    distances, _ = dijkstra_raw(graph, Node((0, 0), Direction.right))
+    print(min(distances[end_nodes[0]], distances[end_nodes[1]]))
 
     graph = part2_graph(content)
-    end = Node((max_x, max_y), Direction.right)
-    distances, previous = a_star_raw(
-        graph,
-        Node((0, 0), Direction.right),
-        end,
-        lambda node: abs(max_x - node.coords[0]) + abs(max_y - node.coords[1]),
-    )
-    print(distances[end])
+    distances, _ = dijkstra_raw(graph, Node((0, 0), Direction.right))
+    print(min(distances[end_nodes[0]], distances[end_nodes[1]]))
