@@ -1,6 +1,6 @@
 import collections.abc
 import sys
-from collections import defaultdict
+from collections import defaultdict, deque
 from heapq import heappop, heappush
 
 from .graph import Graph, Node
@@ -76,3 +76,12 @@ def a_star_raw(
                 tie_breaker += 1
 
     raise ValueError(f"path from {start} to {end} not found")
+
+
+def reconstruct_path(end_node: Node, previous: dict[Node, Node]) -> list[Node]:
+    current = end_node
+    path = deque([current])
+    while current in previous:
+        current = previous[current]
+        path.appendleft(current)
+    return list(path)
